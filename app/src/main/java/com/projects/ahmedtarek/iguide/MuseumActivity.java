@@ -1,14 +1,26 @@
 package com.projects.ahmedtarek.iguide;
 
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.HandlerThread;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -24,22 +36,73 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Handler;
 
 public class MuseumActivity extends AppCompatActivity {
     private TextView paintBody;
     private TextView paintTitle;
     private ImageView imageView;
     private final String TAG = "iGuide";
+    private DatabaseReference mDatabase;
+    private Map<String, String> dataObject = null;
+    private android.os.Handler mHandler;
+    private final String TITLE_COLUMN = "title";
+    private final String DATA_COLUMN = "data";
+
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_museum);
-
+        mHandler = new android.os.Handler(getMainLooper());
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         initialize();
-        int ID = getIntent().getIntExtra("ID", 0);
-        new HttpGetTask().execute(ID);
+        final int ID = getIntent().getIntExtra("ID", 0);
+        final String imageName = "pics/" + ID + ".jpg";
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        storage.getReferenceFromUrl("gs://indoorguide-80788.appspot.com")
+                .child(imageName)
+                .getDownloadUrl()
+                .addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        Glide.with(MuseumActivity.this).load(uri).into(imageView);
+                    }
+                });
+        mDatabase.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Iterator<DataSnapshot> iterator = (Iterator<DataSnapshot>) dataSnapshot.getChildren().iterator();
+                DataSnapshot snapshot = null;
+
+                for (int i = 0 ; i < ID ; i++) {
+                    if (!iterator.hasNext()) {
+                        Toast.makeText(MuseumActivity.this, "Wrong ID", Toast.LENGTH_SHORT).show();
+                        snapshot = null;
+                        break;
+                    }
+                    snapshot = iterator.next();
+                }
+                if (snapshot != null) {
+                    final Post post = snapshot.getValue(Post.class);
+                    dataObject = post.toMap();
+                    mHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            updateLayout();
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 
     void initialize() {
@@ -48,98 +111,14 @@ public class MuseumActivity extends AppCompatActivity {
         imageView = (ImageView) findViewById(R.id.painting);
     }
 
-    private static Drawable loadImageFromURL(String url) {
-        try {
-            InputStream is = (InputStream) new URL(url).getContent();
-            Drawable d = Drawable.createFromStream(is, "Painting");
-            return d;
-        } catch (IOException e) {
-            return null;
-        }
-    }
 
-    public class LoadImageTask extends AsyncTask<String, Void, Drawable> {
+    private void updateLayout() {
+        String title = dataObject.get(TITLE_COLUMN);
+        String body = dataObject.get(DATA_COLUMN);
 
-        @Override
-        protected Drawable doInBackground(String... params) {
-            Drawable painting = loadImageFromURL(params[0]);
-            return painting;
-        }
-
-        @Override
-        protected void onPostExecute(Drawable drawable) {
-            imageView.setImageDrawable(drawable);
-        }
-    }
-
-    public class HttpGetTask extends AsyncTask<Integer, Void, List<String>> {
-
-        AndroidHttpClient client = AndroidHttpClient.newInstance("");
-
-        @Override
-        protected List<String> doInBackground(Integer... params) {
-            final String URL = "http://www.inav.netau.net/json/" + params[0] +".JS";
-            HttpGet httpGetRequest = new HttpGet(URL);
-            JSONResponseHandler responseHandler = new JSONResponseHandler();
-            try {
-                return client.execute(httpGetRequest, responseHandler);
-            } catch (ClientProtocolException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(List<String> strings) {
-            if (null != client) {
-                client.close();
-                if (strings != null) {
-                    if (strings.size() == 3) {
-                        String title = strings.get(0);
-                        String body = strings.get(1);
-                        updateLayout(title, body);
-                        new LoadImageTask().execute(strings.get(2));
-                    }
-                } else {
-                    Log.d(TAG, "There is no JSON Data");
-                    Toast.makeText(getApplicationContext(), "Failed to fetch data from the server", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }
-    }
-
-    private void updateLayout(String title, String body) {
         paintTitle.setText(title);
         paintBody.setText(body);
     }
 
-    private class JSONResponseHandler implements ResponseHandler<List<String>> {
 
-        private static final String TITLE_TAG = "title";
-        private static final String DATA_TAG = "data";
-        private static final String URL_TAG = "url";
-
-        @Override
-        public List<String> handleResponse(HttpResponse httpResponse) throws ClientProtocolException, IOException {
-            List<String> result = new ArrayList<>();
-            String JSONResponse = new BasicResponseHandler().handleResponse(httpResponse);
-            StringBuilder stringBuilder = new StringBuilder(JSONResponse);
-            stringBuilder.delete(0, JSONResponse.indexOf("[")-1);
-
-            try {
-                JSONArray responseObject = (JSONArray) new JSONTokener(stringBuilder.toString()).nextValue();
-                JSONObject jsonObject = responseObject.getJSONObject(0);
-                result.add(jsonObject.getString(TITLE_TAG));
-                result.add(jsonObject.getString(DATA_TAG));
-                result.add(jsonObject.getString(URL_TAG));
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-
-            return result;
-        }
-    }
 }

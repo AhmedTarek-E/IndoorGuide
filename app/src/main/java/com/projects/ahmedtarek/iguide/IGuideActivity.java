@@ -34,6 +34,10 @@ public class IGuideActivity extends AppCompatActivity {
         public void onReceive(Context context, final Intent intent) {
             final int[] whiteCounts = intent.getIntArrayExtra("frames");
 
+            /*Intent mapIntent = new Intent(IGuideActivity.this, MuseumActivity.class);
+            mapIntent.putExtra("ID", 5);
+            startActivity(mapIntent);*/
+
             new Thread(new Runnable() {
                 @Override
                 public void run() {
