@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v4.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.projects.ahmedtarek.iguide.MuseumActivity"
+    tools:showIn="@layout/activity_museum">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/paint_title"
+            android:layout_margin="@dimen/text_margin"
+            android:textSize="30sp" />
+
+        <TextView
+            android:layout_below="@+id/paint_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/body"
+            android:layout_margin="@dimen/text_margin"
+            android:textSize="18sp" />
+
+    </RelativeLayout>
+
+</android.support.v4.widget.NestedScrollView>

@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "1053841859642",
+    "firebase_url": "https://indoorguide-80788.firebaseio.com",
+    "project_id": "indoorguide-80788",
+    "storage_bucket": "indoorguide-80788.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1053841859642:android:c2f024a38175e5be",
+        "android_client_info": {
+          "package_name": "com.projects.ahmedtarek.iguide"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1053841859642-p7eph10s182rv6o420rpq9ni1j7pklqp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.projects.ahmedtarek.iguide",
+            "certificate_hash": "B4963158E2D61BB56131E99DE0813C1A70317E48"
+          }
+        },
+        {
+          "client_id": "1053841859642-bmp5u4e2jnd396fatudi5537t88h9fs6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZui1CllSnfXG8Fr8FRthO2xUjfllCVqs"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1053841859642-bmp5u4e2jnd396fatudi5537t88h9fs6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
